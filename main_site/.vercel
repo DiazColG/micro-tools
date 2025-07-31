@@ -1,0 +1,10 @@
+{
+  "projectId": "",
+  "orgId": "",
+  "settings": {
+    "framework": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": "main_site"
+  }
+}
