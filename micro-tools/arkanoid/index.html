@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Arkanoid Game</title>
+  <style>
+    body {
+      background: #222;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+    #arkanoid-canvas {
+      background: #111;
+      border: 3px solid #2196F3;
+      margin-bottom: 20px;
+      display: block;
+    }
+    #start-btn {
+      padding: 10px 30px;
+      font-size: 1.1em;
+      background: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.2s;
+    }
+    #start-btn:hover {
+      background: #1565c0;
+    }
+    .info {
+      color: #aaa;
+      font-size: 0.95em;
+    }
+    #score {
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧱 Arkanoid</h1>
+  <div id="score">Puntuación: <span id="arkanoid-score">0</span></div>
+  <canvas id="arkanoid-canvas" width="480" height="320"></canvas>
+  <button id="start-btn">Nuevo Juego</button>
+  <div class="info">Mueve la paleta con las flechas izquierda y derecha</div>
+  <script src="arkanoid.js"></script>
+</body>
+</html>
