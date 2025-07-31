@@ -1,18 +1,4 @@
 {
   "version": 2,
-  "github": {
-    "silent": true
-  },
-  "builds": [
-    {
-      "src": "./main_site/**/*",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/main_site/$1"
-    }
-  ]
+  "outputDirectory": "main_site"
 }
