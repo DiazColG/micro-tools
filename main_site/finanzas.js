@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 // --- Lector de Gastos ---
 function lectorGastosHTML() {
-  return `<iframe src="Lector de gastos/index.html" style="width:100vw;height:100vh;min-height:400px;min-width:320px;border:none;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.1);background:#fff;" allowfullscreen></iframe>`;
+  return `<iframe src="lector-gastos/index.html" style="width:100vw;height:100vh;min-height:400px;min-width:320px;border:none;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.1);background:#fff;" allowfullscreen></iframe>`;
 }
   // Crédito Hipotecario
   document.getElementById('tool-hipotecario').addEventListener('click', e => {
