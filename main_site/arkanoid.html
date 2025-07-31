@@ -18,7 +18,12 @@
     </header>
     <main>
         <section class="game-fullscreen">
-            <canvas id="gameCanvas"></canvas>
+            <h2>🧱 Arkanoid</h2>
+            <canvas id="arkanoid-canvas" width="480" height="320"></canvas>
+            <div class="game-controls">
+                <p>Score: <span id="arkanoid-score">0</span></p>
+                <button onclick="startArkanoidGame()">Start Game</button>
+            </div>
             <script src="games/arkanoid/arkanoid.js"></script>
             <h2>🧱 Arkanoid</h2>
             <div class="iframe-wrapper">

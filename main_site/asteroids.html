@@ -18,7 +18,12 @@
     </header>
     <main>
         <section class="game-fullscreen">
-            <canvas id="gameCanvas"></canvas>
+            <h2>🚀 Asteroids</h2>
+            <canvas id="asteroids-canvas" width="800" height="600"></canvas>
+            <div class="game-controls">
+                <p>Score: <span id="asteroids-score">0</span></p>
+                <button onclick="startAsteroidsGame()">Start Game</button>
+            </div>
             <script src="games/asteroids/asteroids.js"></script>
             <h2>🪐 Asteroids</h2>
             <div class="iframe-wrapper">
