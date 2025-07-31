@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotador de Truco</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="/_vercel/insights/script.js"></script>
+    <!-- Librería para generar QR Codes -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+
+    <style>
+        /* --- Reset y Estilos Base --- */
+        :root {
+            --background-color: #1a1a1a;
+            --surface-color: #2c2c2c;
+            --primary-text-color: #ffffff;
+            --secondary-text-color: #a0a0a0;
+            --accent-color: #4a90e2;
+            --accent-hover-color: #5aa1f2;
+            --danger-color: #e24a4a;
+            --danger-hover-color: #f25a5a;
+            --fosforo-color: #f5a623;
+            --success-color: #28a745;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .hidden { display: none !important; }
+
+        /* --- Contenedor Principal --- */
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        h1 { text-align: center; font-weight: 900; font-size: 2.5rem; color: var(--accent-color); }
+
+        /* --- Marcadores de Equipos (Juego) --- */
+        .score-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .team { background-color: var(--surface-color); border-radius: 12px; padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; }
+        .team h2 { font-size: 1.5rem; font-weight: 700; }
+        .score { font-size: 4.5rem; font-weight: 900; line-height: 1; }
+        .status-message { color: var(--danger-color); font-size: 1.1rem; font-weight: 700; height: 20px; margin-top: -10px; margin-bottom: 5px; }
+        .fosforos-display { min-height: 80px; background-color: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start; }
+        .fosforo-group, .fosforo-single { stroke: var(--fosforo-color); stroke-width: 3; stroke-linecap: round; }
+        .buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn { background-color: var(--accent-color); color: var(--primary-text-color); border: none; border-radius: 8px; padding: 15px 0; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease; }
+        .btn:hover { background-color: var(--accent-hover-color); }
+        .btn:active { transform: scale(0.95); }
+        .btn-subtract { grid-column: span 3; background-color: var(--danger-color); }
+        .btn-subtract:hover { background-color: var(--danger-hover-color); }
+        .btn-reset { background-color: var(--secondary-text-color); padding: 20px; font-size: 1.5rem; }
+        .btn-reset:hover { background-color: #b0b0b0; }
+        .winner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(26, 26, 26, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 2.5rem; font-weight: 900; color: var(--fosforo-color); opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; transform: scale(0.8); }
+        .winner-overlay.show { opacity: 1; visibility: visible; transform: scale(1); }
+        .game-over .btn-add, .game-over .btn-subtract { opacity: 0.5; pointer-events: none; }
+
+        /* --- ESTILOS PARA EL TORNEO --- */
+        .main-menu, #tournament-setup, #match-link-view, #report-result-view { display: flex; flex-direction: column; gap: 20px; background-color: var(--surface-color); padding: 30px; border-radius: 12px; text-align: center; }
+        .main-menu h2, #tournament-setup h2, #match-link-view h2, #report-result-view h2 { text-align: center; font-size: 1.8rem; color: var(--primary-text-color); }
+        .btn-large { padding: 20px; font-size: 1.5rem; }
+        #tournament-setup input { background-color: var(--background-color); color: var(--primary-text-color); border: 1px solid var(--secondary-text-color); border-radius: 8px; padding: 12px; font-size: 1.1rem; }
+        #tournament-bracket { display: flex; flex-direction: column; gap: 30px; }
+        .bracket-round { display: flex; justify-content: space-around; gap: 20px; }
+        .bracket-match { background-color: var(--surface-color); border-radius: 8px; padding: 15px; width: 45%; display: flex; flex-direction: column; gap: 10px; border-left: 5px solid var(--secondary-text-color); }
+        .match-teams { display: flex; flex-direction: column; gap: 10px; }
+        .team-name { display: flex; justify-content: space-between; font-size: 1.1rem; }
+        .team-name.winner { font-weight: 700; color: var(--success-color); }
+        .match-separator { height: 1px; background-color: var(--secondary-text-color); margin: 5px 0; }
+        .btn-play { background-color: var(--success-color); }
+        .btn-play:hover { background-color: #218838; }
+        #qr-code-match, #qr-code-result { background: white; padding: 10px; display: inline-block; margin: 15px auto 0; }
+        #qr-code-match canvas, #qr-code-result canvas { width: 150px !important; height: 150px !important; }
+        .link-box { background-color: var(--background-color); padding: 10px; border-radius: 5px; word-break: break-all; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Anotador de Truco</h1>
+
+        <!-- VISTA: MENÚ PRINCIPAL -->
+        <div id="main-menu">
+            <button class="btn btn-large" id="btn-quick-game">Partida Rápida</button>
+            <button class="btn btn-large" id="btn-tournament-mode">Modo Torneo</button>
+        </div>
+
+        <!-- VISTA: CONFIGURACIÓN DEL TORNEO -->
+        <div id="tournament-setup" class="hidden">
+            <h2>Configurar Torneo</h2>
+            <input type="text" id="team-name-1" placeholder="Nombre Equipo 1" value="Equipo A">
+            <input type="text" id="team-name-2" placeholder="Nombre Equipo 2" value="Equipo B">
+            <input type="text" id="team-name-3" placeholder="Nombre Equipo 3" value="Equipo C">
+            <input type="text" id="team-name-4" placeholder="Nombre Equipo 4" value="Equipo D">
+            <button class="btn btn-large" id="btn-start-tournament">Sortear y Empezar</button>
+        </div>
+
+        <!-- VISTA: CUADRO DEL TORNEO -->
+        <div id="tournament-bracket" class="hidden"></div>
+
+        <!-- VISTA: LINK DEL PARTIDO -->
+        <div id="match-link-view" class="hidden">
+            <h2 id="match-link-title"></h2>
+            <p>Escaneá este QR o compartí el link para anotar este partido en otro celular.</p>
+            <div id="qr-code-match"></div>
+            <div class="link-box" id="match-url-box"></div>
+            <button class="btn" id="btn-back-to-bracket">Volver al Cuadro</button>
+        </div>
+
+        <!-- VISTA: REPORTAR RESULTADO -->
+        <div id="report-result-view" class="hidden">
+            <h2 id="report-result-title"></h2>
+            <p>¡Partida finalizada! El organizador debe abrir este link o escanear el QR para registrar el resultado.</p>
+            <div id="qr-code-result"></div>
+            <div class="link-box" id="result-url-box"></div>
+        </div>
+
+        <!-- VISTA: JUEGO (ANOTADOR) -->
+        <div id="game-container" class="hidden">
+            <div class="score-container">
+                <div class="team" id="team-nosotros">
+                    <h2 id="game-team-name-nosotros">Nosotros</h2>
+                    <p class="score" id="score-nosotros">0</p>
+                    <p class="status-message" id="status-nosotros"></p>
+                    <div class="fosforos-display" id="fosforos-nosotros"></div>
+                    <div class="buttons">
+                        <button class="btn btn-add" data-team="nosotros" data-points="1">+1</button>
+                        <button class="btn btn-add" data-team="nosotros" data-points="2">+2</button>
+                        <button class="btn btn-add" data-team="nosotros" data-points="3">+3</button>
+                        <button class="btn btn-subtract" data-team="nosotros" data-points="-1">-1</button>
+                    </div>
+                    <div class="winner-overlay" id="winner-nosotros">¡Ganaron!</div>
+                </div>
+                <div class="team" id="team-ellos">
+                    <h2 id="game-team-name-ellos">Ellos</h2>
+                    <p class="score" id="score-ellos">0</p>
+                    <p class="status-message" id="status-ellos"></p>
+                    <div class="fosforos-display" id="fosforos-ellos"></div>
+                    <div class="buttons">
+                        <button class="btn btn-add" data-team="ellos" data-points="1">+1</button>
+                        <button class="btn btn-add" data-team="ellos" data-points="2">+2</button>
+                        <button class="btn btn-add" data-team="ellos" data-points="3">+3</button>
+                        <button class="btn btn-subtract" data-team="ellos" data-points="-1">-1</button>
+                    </div>
+                    <div class="winner-overlay" id="winner-ellos">¡Ganaron!</div>
+                </div>
+            </div>
+            <button class="btn btn-reset" id="reset-btn">Reiniciar Partida</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ESTADO GLOBAL ---
+            const PUNTOS_PARA_GANAR = 30;
+            let scores = { nosotros: 0, ellos: 0 };
+            let gameOver = false;
+            let tournamentState = null;
+            let currentMatchInfo = null;
+
+            // --- REFERENCIAS AL DOM ---
+            const views = {
+                mainMenu: document.getElementById('main-menu'),
+                tournamentSetup: document.getElementById('tournament-setup'),
+                tournamentBracket: document.getElementById('tournament-bracket'),
+                matchLinkView: document.getElementById('match-link-view'),
+                reportResultView: document.getElementById('report-result-view'),
+                gameContainer: document.getElementById('game-container'),
+            };
+            const scoreDisplays = { nosotros: document.getElementById('score-nosotros'), ellos: document.getElementById('score-ellos') };
+            const fosforosDisplays = { nosotros: document.getElementById('fosforos-nosotros'), ellos: document.getElementById('fosforos-ellos') };
+            const winnerOverlays = { nosotros: document.getElementById('winner-nosotros'), ellos: document.getElementById('winner-ellos') };
+            const statusMessages = { nosotros: document.getElementById('status-nosotros'), ellos: document.getElementById('status-ellos') };
+            const teamContainers = { nosotros: document.getElementById('team-nosotros'), ellos: document.getElementById('team-ellos') };
+            const gameTeamNames = { nosotros: document.getElementById('game-team-name-nosotros'), ellos: document.getElementById('game-team-name-ellos') };
+            const addButtons = document.querySelectorAll('.btn-add, .btn-subtract');
+            const resetButton = document.getElementById('reset-btn');
+            const btnQuickGame = document.getElementById('btn-quick-game');
+            const btnTournamentMode = document.getElementById('btn-tournament-mode');
+            const btnStartTournament = document.getElementById('btn-start-tournament');
+            const teamNameInputs = [document.getElementById('team-name-1'), document.getElementById('team-name-2'), document.getElementById('team-name-3'), document.getElementById('team-name-4')];
+            const btnBackToBracket = document.getElementById('btn-back-to-bracket');
+
+            // --- LÓGICA DE VISTAS ---
+            const showView = (viewId) => {
+                Object.values(views).forEach(view => view.classList.add('hidden'));
+                views[viewId].classList.remove('hidden');
+            };
+
+            // --- LÓGICA DE URL y QR ---
+            const getBaseUrl = () => `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+            const generateQrCode = (elementId, text) => {
+                try {
+                    const qr = qrcode(0, 'L');
+                    qr.addData(text);
+                    qr.make();
+                    document.getElementById(elementId).innerHTML = qr.createImgTag(4);
+                } catch (e) {
+                    console.error("Error generating QR code:", e);
+                    document.getElementById(elementId).innerHTML = "Error al generar QR.";
+                }
+            };
+
+            // --- LÓGICA DEL TORNEO ---
+            const saveTournamentState = () => localStorage.setItem('trucoTournament', JSON.stringify(tournamentState));
+            const loadTournamentState = () => {
+                const savedState = localStorage.getItem('trucoTournament');
+                if (savedState) {
+                    tournamentState = JSON.parse(savedState);
+                    return true;
+                }
+                return false;
+            };
+
+            const startTournament = () => {
+                const teamNames = teamNameInputs.map(input => input.value.trim()).filter(Boolean);
+                if (teamNames.length < 4) { alert('Por favor, ingresá el nombre de los 4 equipos.'); return; }
+                const shuffledTeams = teamNames.sort(() => Math.random() - 0.5);
+                tournamentState = {
+                    teams: shuffledTeams,
+                    matches: {
+                        semi1: { team1: shuffledTeams[0], team2: shuffledTeams[3], winner: null },
+                        semi2: { team1: shuffledTeams[1], team2: shuffledTeams[2], winner: null },
+                        final: { team1: null, team2: null, winner: null },
+                        thirdPlace: { team1: null, team2: null, winner: null },
+                    }
+                };
+                saveTournamentState();
+                renderBracket();
+                showView('tournamentBracket');
+            };
+
+            const renderBracket = () => {
+                const bracketContainer = views.tournamentBracket;
+                bracketContainer.innerHTML = '<h2>Cuadro del Torneo</h2>';
+                const { matches } = tournamentState;
+                const createMatchElement = (matchId, matchData, title) => {
+                    const matchEl = document.createElement('div');
+                    matchEl.className = 'bracket-match';
+                    matchEl.innerHTML = `<h3>${title}</h3><div class="match-teams"><div class="team-name ${matchData.winner === matchData.team1 ? 'winner' : ''}">${matchData.team1 || '<i>Por definir</i>'}</div><div class="match-separator"></div><div class="team-name ${matchData.winner === matchData.team2 ? 'winner' : ''}">${matchData.team2 || '<i>Por definir</i>'}</div></div>`;
+                    if (matchData.team1 && matchData.team2 && !matchData.winner) {
+                        const playBtn = document.createElement('button');
+                        playBtn.className = 'btn btn-play';
+                        playBtn.textContent = 'Generar Link';
+                        playBtn.onclick = () => showMatchLink(matchId);
+                        matchEl.appendChild(playBtn);
+                    }
+                    return matchEl;
+                };
+                const semiFinals = document.createElement('div');
+                semiFinals.className = 'bracket-round';
+                semiFinals.appendChild(createMatchElement('semi1', matches.semi1, 'Semifinal 1'));
+                semiFinals.appendChild(createMatchElement('semi2', matches.semi2, 'Semifinal 2'));
+                const finals = document.createElement('div');
+                finals.className = 'bracket-round';
+                finals.appendChild(createMatchElement('thirdPlace', matches.thirdPlace, '3er y 4to Puesto'));
+                finals.appendChild(createMatchElement('final', matches.final, 'Final'));
+                bracketContainer.appendChild(semiFinals);
+                bracketContainer.appendChild(finals);
+                const exitBtn = document.createElement('button');
+                exitBtn.className = 'btn btn-danger';
+                exitBtn.textContent = 'Terminar Torneo';
+                exitBtn.onclick = () => {
+                    if (confirm('¿Estás seguro? Se borrará todo el progreso.')) {
+                        localStorage.removeItem('trucoTournament');
+                        tournamentState = null;
+                        currentMatchInfo = null;
+                        window.location.hash = '';
+                        showView('mainMenu');
+                    }
+                };
+                bracketContainer.appendChild(exitBtn);
+            };
+
+            const showMatchLink = (matchId) => {
+                const matchData = tournamentState.matches[matchId];
+                document.getElementById('match-link-title').textContent = `${matchData.team1} vs ${matchData.team2}`;
+                
+                // CAMBIO CLAVE: Se añaden los nombres de los equipos a la URL
+                const matchUrl = `${getBaseUrl()}#match=${matchId}&team1=${encodeURIComponent(matchData.team1)}&team2=${encodeURIComponent(matchData.team2)}`;
+                
+                document.getElementById('match-url-box').textContent = matchUrl;
+                generateQrCode('qr-code-match', matchUrl);
+                showView('matchLinkView');
+            };
+
+            const updateBracketAfterMatch = (matchId, winnerName) => {
+                if (!tournamentState) {
+                    if (!loadTournamentState()) {
+                        alert("Error: No se encontró un torneo activo para actualizar. Por favor, volvé a escanear el QR en el celular del organizador.");
+                        return;
+                    }
+                }
+                tournamentState.matches[matchId].winner = winnerName;
+                if (matchId === 'semi1' || matchId === 'semi2') {
+                    const semi1 = tournamentState.matches.semi1;
+                    const semi2 = tournamentState.matches.semi2;
+                    if (semi1.winner && semi2.winner) {
+                        tournamentState.matches.final.team1 = semi1.winner;
+                        tournamentState.matches.final.team2 = semi2.winner;
+                        const semi1Loser = semi1.team1 === semi1.winner ? semi1.team2 : semi1.team1;
+                        const semi2Loser = semi2.team1 === semi2.winner ? semi2.team2 : semi2.team1;
+                        tournamentState.matches.thirdPlace.team1 = semi1Loser;
+                        tournamentState.matches.thirdPlace.team2 = semi2Loser;
+                    }
+                }
+                saveTournamentState();
+                renderBracket();
+                showView('tournamentBracket');
+                history.pushState("", document.title, window.location.pathname + window.location.search);
+            };
+
+            // --- LÓGICA DEL ANOTADOR ---
+            const dibujarFosforos = (team, score) => {
+                const display = fosforosDisplays[team];
+                display.innerHTML = '';
+                const gruposDeCinco = Math.floor(score / 5);
+                const resto = score % 5;
+                for (let i = 0; i < gruposDeCinco; i++) {
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('width', '40'); svg.setAttribute('height', '40'); svg.setAttribute('viewBox', '0 0 40 40');
+                    svg.innerHTML = `<g class="fosforo-group"><line x1="5" y1="5" x2="35" y2="5"></line><line x1="5" y1="35" x2="35" y2="35"></line><line x1="5" y1="5" x2="5" y2="35"></line><line x1="35" y1="5" x2="35" y2="35"></line><line x1="5" y1="5" x2="35" y2="35"></line></g>`;
+                    display.appendChild(svg);
+                }
+                for (let i = 0; i < resto; i++) {
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('width', '10'); svg.setAttribute('height', '40'); svg.setAttribute('viewBox', '0 0 10 40');
+                    svg.innerHTML = `<line class="fosforo-single" x1="5" y1="5" x2="5" y2="35"></line>`;
+                    display.appendChild(svg);
+                }
+            };
+            
+            const actualizarPuntaje = (team, points) => {
+                if (gameOver) return;
+                let newScore = scores[team] + points;
+                if (newScore < 0) newScore = 0;
+                scores[team] = newScore;
+                scoreDisplays[team].textContent = scores[team];
+                if (currentMatchInfo) {
+                    localStorage.setItem(`trucoMatch_${currentMatchInfo.id}`, JSON.stringify(scores));
+                }
+                dibujarFosforos(team, scores[team]);
+                comprobarGanador();
+            };
+            
+            const comprobarGanador = () => {
+                if (scores.nosotros >= PUNTOS_PARA_GANAR) finalizarJuego('nosotros');
+                else if (scores.ellos >= PUNTOS_PARA_GANAR) finalizarJuego('ellos');
+            };
+            
+            const finalizarJuego = (winnerTeam) => {
+                gameOver = true;
+                if (currentMatchInfo) {
+                    const winnerName = winnerTeam === 'nosotros' ? currentMatchInfo.team1 : currentMatchInfo.team2;
+                    const resultUrl = `${getBaseUrl()}#result=${currentMatchInfo.id}&winner=${encodeURIComponent(winnerName)}`;
+                    document.getElementById('report-result-title').textContent = `Ganador: ${winnerName}`;
+                    document.getElementById('result-url-box').textContent = resultUrl;
+                    generateQrCode('qr-code-result', resultUrl);
+                    showView('reportResultView');
+                    localStorage.removeItem(`trucoMatch_${currentMatchInfo.id}`);
+                } else {
+                    winnerOverlays[winnerTeam].classList.add('show');
+                    teamContainers.nosotros.classList.add('game-over');
+                    teamContainers.ellos.classList.add('game-over');
+                    const loserTeam = winnerTeam === 'nosotros' ? 'ellos' : 'nosotros';
+                    if (scores[loserTeam] <= 15) statusMessages[loserTeam].textContent = 'Duermen afuera';
+                }
+            };
+            
+            const reiniciarPartida = () => {
+                gameOver = false;
+                scores = { nosotros: 0, ellos: 0 };
+                if (currentMatchInfo) {
+                    const savedMatchScores = localStorage.getItem(`trucoMatch_${currentMatchInfo.id}`);
+                    if (savedMatchScores) {
+                        scores = JSON.parse(savedMatchScores);
+                    }
+                }
+                Object.values(winnerOverlays).forEach(overlay => overlay.classList.remove('show'));
+                Object.values(teamContainers).forEach(container => container.classList.remove('game-over'));
+                Object.values(statusMessages).forEach(msg => msg.textContent = '');
+                ['nosotros', 'ellos'].forEach(team => {
+                    scoreDisplays[team].textContent = scores[team];
+                    dibujarFosforos(team, 0);
+                });
+            };
+
+            // --- ASIGNACIÓN DE EVENTOS ---
+            addButtons.forEach(button => button.addEventListener('click', () => { const team = button.dataset.team; const points = parseInt(button.dataset.points, 10); actualizarPuntaje(team, points); }));
+            resetButton.addEventListener('click', () => { if (confirm('¿Reiniciar esta partida?')) reiniciarPartida(); });
+            btnQuickGame.addEventListener('click', () => { currentMatchInfo = null; gameTeamNames.nosotros.textContent = 'Nosotros'; gameTeamNames.ellos.textContent = 'Ellos'; reiniciarPartida(); showView('gameContainer'); });
+            btnTournamentMode.addEventListener('click', () => showView('tournamentSetup'));
+            btnStartTournament.addEventListener('click', startTournament);
+            btnBackToBracket.addEventListener('click', () => { renderBracket(); showView('tournamentBracket'); });
+
+            // --- INICIALIZACIÓN Y MANEJO DE URL ---
+            const handleUrlHash = () => {
+                const hash = window.location.hash.substring(1);
+                if (!hash) return false;
+                
+                const params = new URLSearchParams(hash);
+
+                // CAMBIO CLAVE: Nueva lógica para manejar un link de partido
+                if (params.has('match') && params.has('team1') && params.has('team2')) {
+                    const matchId = params.get('match');
+                    const team1 = decodeURIComponent(params.get('team1'));
+                    const team2 = decodeURIComponent(params.get('team2'));
+                    
+                    // No se necesita cargar el torneo, la URL tiene toda la info
+                    currentMatchInfo = { id: matchId, team1: team1, team2: team2 };
+                    gameTeamNames.nosotros.textContent = currentMatchInfo.team1;
+                    gameTeamNames.ellos.textContent = currentMatchInfo.team2;
+                    reiniciarPartida();
+                    showView('gameContainer');
+                    return true;
+
+                } else if (params.has('result') && params.has('winner')) {
+                    const matchId = params.get('result');
+                    const winnerName = decodeURIComponent(params.get('winner'));
+                    // Esta lógica SÍ necesita el localStorage del organizador
+                    updateBracketAfterMatch(matchId, winnerName);
+                    return true;
+                }
+                return false;
+            };
+
+            if (!handleUrlHash()) {
+                if (loadTournamentState()) {
+                    renderBracket();
+                    showView('tournamentBracket');
+                } else {
+                    showView('mainMenu');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

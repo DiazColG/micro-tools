@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake | Micro-SaaS Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Micro-SaaS Hub</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="juegos.html">Juegos</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="game-fullscreen">
+            <h2>🐍 Snake</h2>
+            <div class="iframe-wrapper">
+                <iframe src="../snake/index.html" title="Snake" allowfullscreen></iframe>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Micro-SaaS Hub</p>
+        <script>
+        // Prevenir scroll con flechas
+        window.addEventListener('keydown', function(e) {
+            if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ",32].includes(e.key)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        </script>
+    </footer>
+</body>
+</html>

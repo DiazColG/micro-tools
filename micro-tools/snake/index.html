@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake Game - Micro-SaaS Hub</title>
+  <style>
+    body {
+      background: #222;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+    #stats {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 30px;
+      font-size: 1.2em;
+    }
+    #snake-canvas {
+      background: #111;
+      border: 3px solid #4CAF50;
+      margin-bottom: 20px;
+      display: block;
+    }
+    #start-btn {
+      padding: 10px 30px;
+      font-size: 1.1em;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.2s;
+    }
+    #start-btn:hover {
+      background: #388e3c;
+    }
+    .info {
+      color: #aaa;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake Game</h1>
+  <div id="stats">
+    <div>Puntuación: <span id="snake-score">0</span></div>
+    <div>Longitud: <span id="snake-length">1</span></div>
+    <div>Velocidad: <span id="snake-speed">1</span></div>
+  </div>
+  <canvas id="snake-canvas" width="400" height="400"></canvas>
+  <button id="start-btn">Nuevo Juego</button>
+  <div class="info">Usa las flechas del teclado para mover la serpiente</div>
+  <script src="snake.js"></script>
+</body>
+</html>
